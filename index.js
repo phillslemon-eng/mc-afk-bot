@@ -1,11 +1,18 @@
 const bedrock = require('bedrock-protocol');
+const express = require('express');
+const app = express();
 
+// Keep Render awake
+app.get('/', (req, res) => res.send('AFK Bot is ALIVE 24/7'));
+app.listen(3000, () => console.log('Ping server on port 3000'));
+
+// Bot logic
 let client = null;
 
-function connectBot() {
+function connect() {
   if (client) return;
 
-  console.log('Connecting to Bedrock server...');
+  console.log('Connecting to Bedrock...');
 
   client = bedrock.createClient({
     host: 'VortexLifestealSMP.enderman.cloud',
@@ -16,9 +23,9 @@ function connectBot() {
     skipPing: true
   });
 
-  client.on('spawn', () => {  // ← WAIT FOR FULL SPAWN
-    console.log('Bot SPAWNED! Position ready. Server 24/7');
-
+  client.on('spawn', () => {
+    console.log('Bot SPAWNED! Server 24/7');
+    
     client.write('text', {
       type: 'chat',
       message: 'AFK Bot online - server stays alive!',
@@ -28,13 +35,12 @@ function connectBot() {
       platform_chat_id: ''
     });
 
-    // AFK Jump every 4 mins — ONLY AFTER SPAWN
     setInterval(() => {
-      if (client?.runtimeEntityId && client?.position) {
+      if (client?.position && client?.runtimeEntityId) {
         const pos = client.position;
         client.write('move_player', {
           runtime_entity_id: client.runtimeEntityId,
-          position: { x: pos.x, y: pos.y + 0.1, z: pos.z },
+          position: { x: pos.x, y: pos.y + 0.15, z: pos.z },
           pitch: 0, yaw: 0, head_yaw: 0,
           mode: 'normal',
           on_ground: false,
@@ -43,64 +49,26 @@ function connectBot() {
         });
         console.log('AFK Jump');
       }
-    }, 240000);
+    }, 240000); // 4 mins
   });
 
   client.on('error', (err) => {
     console.log('Error:', err.message);
-    cleanupAndReconnect();
+    cleanup();
   });
 
   client.on('close', () => {
     console.log('Disconnected. Reconnecting...');
-    cleanupAndReconnect();
+    cleanup();
   });
 }
 
-function cleanupAndReconnect() {
+function cleanup() {
   if (client) {
     client.removeAllListeners();
     client = null;
   }
-  setTimeout(connectBot, 10000);
+  setTimeout(connect, 10000);
 }
 
-connectBot();          position: {
-            x: client.position.x,
-            y: client.position.y + 0.1,
-            z: client.position.z
-          },
-          pitch: 0,
-          yaw: 0,
-          head_yaw: 0,
-          mode: 'normal',
-          on_ground: false,
-          ridden_runtime_entity_id: 0,
-          teleport: { teleport: false }
-        });
-        console.log('AFK Jump');
-      }
-    }, 240000); // 4 minutes
-  });
-
-  client.on('error', (err) => {
-    console.log('Connection error:', err.message);
-    cleanupAndReconnect();
-  });
-
-  client.on('close', () => {
-    console.log('Connection closed. Reconnecting in 10s...');
-    cleanupAndReconnect();
-  });
-}
-
-function cleanupAndReconnect() {
-  if (client) {
-    client.removeAllListeners();
-    client = null;
-  }
-  setTimeout(connectBot, 10000); // Retry after 10s
-}
-
-// Start the bot
-connectBot();
+connect();
