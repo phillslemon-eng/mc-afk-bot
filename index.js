@@ -1,11 +1,11 @@
 const bedrock = require('bedrock-protocol');
 
-let client = null; // Prevent double connections
+let client = null;
 
 function connectBot() {
-  if (client) return; // Avoid multiple connections
+  if (client) return;
 
-  console.log('Attempting to connect to Bedrock server...');
+  console.log('Connecting to Bedrock server...');
 
   client = bedrock.createClient({
     host: 'VortexLifestealSMP.enderman.cloud',
@@ -13,28 +13,59 @@ function connectBot() {
     username: 'AFKBot24',
     version: '1.21.120',
     offline: true,
-    skipPing: true // Fix "Ping timed out" faster
+    skipPing: true
   });
 
-  client.on('start_game', () => {
-    console.log('Bot JOINED! Server is now 24/7');
-    
-    // Send chat
+  client.on('spawn', () => {  // ← WAIT FOR FULL SPAWN
+    console.log('Bot SPAWNED! Position ready. Server 24/7');
+
     client.write('text', {
       type: 'chat',
-      message: 'AFK Bot online - keeping server alive!',
+      message: 'AFK Bot online - server stays alive!',
       source_name: 'AFKBot24',
       needs_translation: false,
       xuid: '',
       platform_chat_id: ''
     });
 
-    // AFK Jump every 4 mins
+    // AFK Jump every 4 mins — ONLY AFTER SPAWN
     setInterval(() => {
-      if (client && client.runtimeEntityId) {
+      if (client?.runtimeEntityId && client?.position) {
+        const pos = client.position;
         client.write('move_player', {
           runtime_entity_id: client.runtimeEntityId,
-          position: {
+          position: { x: pos.x, y: pos.y + 0.1, z: pos.z },
+          pitch: 0, yaw: 0, head_yaw: 0,
+          mode: 'normal',
+          on_ground: false,
+          ridden_runtime_entity_id: 0,
+          teleport: { teleport: false }
+        });
+        console.log('AFK Jump');
+      }
+    }, 240000);
+  });
+
+  client.on('error', (err) => {
+    console.log('Error:', err.message);
+    cleanupAndReconnect();
+  });
+
+  client.on('close', () => {
+    console.log('Disconnected. Reconnecting...');
+    cleanupAndReconnect();
+  });
+}
+
+function cleanupAndReconnect() {
+  if (client) {
+    client.removeAllListeners();
+    client = null;
+  }
+  setTimeout(connectBot, 10000);
+}
+
+connectBot();          position: {
             x: client.position.x,
             y: client.position.y + 0.1,
             z: client.position.z
