@@ -1,40 +1,53 @@
-const bedrock = require('bedrock-protocol');
-const express = require('express');
-const app = express();
+const { createBot } = require('mineflayer-bedrock');
+const http = require('http');
 
-app.get('/', (req, res) => res.send('AFK Bot ALIVE'));
-app.listen(3000, () => console.log('Ping on'));
+http.createServer((req, res) => res.end('AFK BOT ALIVE')).listen(3000);
 
-let client = null;
+let bot;
 
-function connect() {
-  if (client) return;
+function startBot() {
+  if (bot) return;
 
-  console.log('Connecting...');
+  console.log('Starting bot...');
 
-  client = bedrock.createClient({
+  bot = createBot({
     host: 'VortexLifestealSMP.enderman.cloud',
     port: 29897,
-    username: '§kAFK§r',  // INVISIBLE NAME
-    version: '1.21.120',
-    offline: true,
-    skipPing: true
+    username: 'AFKBot24',
+    version: '1.21.120'
   });
 
-  // BLOCK ALL COMMANDS & SCRIPTS
-  client.on('packet', (packet) => {
-    const name = packet.data?.name;
-    if (name === 'command_request' || name === 'script_message' || name === 'modal_form_request') {
-      console.log('BLOCKED:', name);
-      return false; // DROP PACKET
-    }
+  bot.once('spawn', () => {
+    console.log('BOT SPAWNED - 24/7 LOCKED');
+    bot.chat('AFK Bot online - server never dies');
+
+    setInterval(() => {
+      bot.setControlState('jump', true);
+      setTimeout(() => bot.setControlState('jump', false), 300);
+      console.log('AFK Jump');
+    }, 240000);
   });
 
-  client.on('spawn', () => {
-    console.log('Bot SPAWNED - INVISIBLE & IMMUNE');
-    // No chat — stay silent
+  bot.on('error', (err) => {
+    console.log('Error:', err.message);
+    cleanup();
   });
 
+  bot.on('end', () => {
+    console.log('Disconnected. Reconnecting...');
+    cleanup();
+  });
+}
+
+function cleanup() {
+  if (bot) {
+    bot.removeAllListeners();
+    bot = null;
+  }
+  setTimeout(startBot, 5000);
+}
+
+startBot();
   client.on('error', () => cleanup());
   client.on('close', () => cleanup());
 }
