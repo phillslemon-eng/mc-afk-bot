@@ -2,8 +2,8 @@ const bedrock = require('bedrock-protocol');
 const express = require('express');
 const app = express();
 
-app.get('/', (req, res) => res.send('AFK Bot ALIVE 24/7'));
-app.listen(3000, () => console.log('Ping server on'));
+app.get('/', (req, res) => res.send('AFK Bot ALIVE'));
+app.listen(3000, () => console.log('Ping on'));
 
 let client = null;
 
@@ -15,26 +15,39 @@ function connect() {
   client = bedrock.createClient({
     host: 'VortexLifestealSMP.enderman.cloud',
     port: 29897,
-    username: 'AFKBot24',
+    username: '§kAFK§r',  // INVISIBLE NAME
     version: '1.21.120',
     offline: true,
     skipPing: true
   });
 
-  // IGNORE ALL PACKETS THAT CRASH
+  // BLOCK ALL COMMANDS & SCRIPTS
   client.on('packet', (packet) => {
-    if (packet.data?.name === 'script_message' || packet.data?.name === 'command_request') {
-      console.log('IGNORED CRASH PACKET:', packet.data.name);
-      return; // BLOCK IT
+    const name = packet.data?.name;
+    if (name === 'command_request' || name === 'script_message' || name === 'modal_form_request') {
+      console.log('BLOCKED:', name);
+      return false; // DROP PACKET
     }
   });
 
   client.on('spawn', () => {
-    console.log('Bot SPAWNED! 24/7 ON');
-    client.write('text', {
-      type: 'chat',
-      message: 'AFK Bot online!',
-      source_name: 'AFKBot24',
+    console.log('Bot SPAWNED - INVISIBLE & IMMUNE');
+    // No chat — stay silent
+  });
+
+  client.on('error', () => cleanup());
+  client.on('close', () => cleanup());
+}
+
+function cleanup() {
+  if (client) {
+    client.removeAllListeners();
+    client = null;
+  }
+  setTimeout(connect, 5000); // 5 sec reconnect
+}
+
+connect();      source_name: 'AFKBot24',
       needs_translation: false,
       xuid: '',
       platform_chat_id: ''
