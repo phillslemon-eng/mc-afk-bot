@@ -2,17 +2,15 @@ const bedrock = require('bedrock-protocol');
 const express = require('express');
 const app = express();
 
-// Keep Render awake
-app.get('/', (req, res) => res.send('AFK Bot is ALIVE 24/7'));
-app.listen(3000, () => console.log('Ping server on port 3000'));
+app.get('/', (req, res) => res.send('AFK Bot ALIVE 24/7'));
+app.listen(3000, () => console.log('Ping server on'));
 
-// Bot logic
 let client = null;
 
 function connect() {
   if (client) return;
 
-  console.log('Connecting to Bedrock...');
+  console.log('Connecting...');
 
   client = bedrock.createClient({
     host: 'VortexLifestealSMP.enderman.cloud',
@@ -23,18 +21,39 @@ function connect() {
     skipPing: true
   });
 
+  // IGNORE ALL PACKETS THAT CRASH
+  client.on('packet', (packet) => {
+    if (packet.data?.name === 'script_message' || packet.data?.name === 'command_request') {
+      console.log('IGNORED CRASH PACKET:', packet.data.name);
+      return; // BLOCK IT
+    }
+  });
+
   client.on('spawn', () => {
-    console.log('Bot SPAWNED! Server 24/7');
-    
+    console.log('Bot SPAWNED! 24/7 ON');
     client.write('text', {
       type: 'chat',
-      message: 'AFK Bot online - server stays alive!',
+      message: 'AFK Bot online!',
       source_name: 'AFKBot24',
       needs_translation: false,
       xuid: '',
       platform_chat_id: ''
     });
+  });
 
+  client.on('error', () => cleanup());
+  client.on('close', () => cleanup());
+}
+
+function cleanup() {
+  if (client) {
+    client.removeAllListeners();
+    client = null;
+  }
+  setTimeout(connect, 8000); // 8 sec reconnect
+}
+
+connect();
     setInterval(() => {
       if (client?.position && client?.runtimeEntityId) {
         const pos = client.position;
