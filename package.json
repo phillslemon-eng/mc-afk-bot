@@ -1,11 +1,9 @@
 {
-  "name": "bedrock-afk-bot",
+  "name": "bedrock-afk",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": { "start": "node index.js" },
   "dependencies": {
-    "bedrock-protocol": "^3.50.0",
-    "express": "^4.18.2"
-  },
-  "engines": { "node": ">=18" }
+    "mineflayer-bedrock": "^1.0.8"
+  }
 }
