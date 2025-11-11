@@ -11,8 +11,8 @@ function startBot() {
   console.log('Starting bot...');
 
   bot = createBot({
-    host: 'VortexLifestealSMP.enderman.cloud',
-    port: 29897,
+    host: 'VortexLifesteal-OXwN.aternos.me',
+    port: 951444,
     username: 'AFKBot24',
     version: '1.21.120'
   });
